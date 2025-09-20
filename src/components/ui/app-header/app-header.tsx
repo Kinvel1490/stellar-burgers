@@ -35,7 +35,14 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
       <div className={styles.logo}>
         <Logo className='' />
       </div>
-      <NavLink to='/profile' className={styles.link_position_last}>
+      <NavLink
+        to='/profile'
+        className={({ isActive }) =>
+          isActive
+            ? `${styles.link} ${styles.link_position_last} ${styles.link_active}`
+            : `${styles.link} ${styles.link_position_last}`
+        }
+      >
         <ProfileIcon type={'primary'} />
         <p className='text text_type_main-default ml-2'>
           {userName || 'Личный кабинет'}

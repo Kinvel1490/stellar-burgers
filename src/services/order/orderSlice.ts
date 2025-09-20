@@ -3,16 +3,14 @@ import {
   TIngredient,
   TOrdersData,
   TConstructorIngredient,
-  TOrder
+  TOrder,
+  TOrderRequestItems
 } from '@utils-types';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { makeOrder, getOrderByNumber } from './actions';
 
 interface TOrderSlice {
-  orderRequestItems: {
-    bun: TIngredient | undefined;
-    ingredients: TConstructorIngredient[];
-  };
+  orderRequestItems: TOrderRequestItems;
   orderRequest: boolean;
   orderData: TOrdersData;
   orderModalData: TOrder | null;
@@ -21,7 +19,7 @@ interface TOrderSlice {
 
 const initialState: TOrderSlice = {
   orderRequestItems: {
-    bun: undefined,
+    bun: null,
     ingredients: []
   },
   orderRequest: false,
@@ -92,7 +90,7 @@ export const orderSlice = createSlice({
         state.orderRequest = true;
         state.newOrderNumber = action.payload.order.number;
         state.orderRequestItems = {
-          bun: undefined,
+          bun: null,
           ingredients: []
         };
       })
