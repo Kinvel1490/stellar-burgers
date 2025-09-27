@@ -53,6 +53,9 @@ export const userSlice = createSlice({
           email: action.payload.user.email
         };
       })
+      .addCase(getUser.rejected, (state, action) => {
+        console.log(action.error.message);
+      })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.data = action.payload.user;
       })
