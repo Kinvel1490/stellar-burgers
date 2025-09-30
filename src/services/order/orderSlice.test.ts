@@ -4,35 +4,31 @@ import {
   test,
   jest,
   beforeAll,
-  afterAll
+  beforeEach
 } from '@jest/globals';
-import RootReducer from '../RootReducer';
-import {
+import orderSlice, {
   addIngredient,
-  removeIngredient,
-  TOrderSlice,
   moveIngredientDown,
-  moveIngredientUp
+  moveIngredientUp,
+  onOrderModalClose,
+  removeIngredient,
+  TOrderSlice
 } from './orderSlice';
-import { getOrderByNumberApi } from '@api';
-import store from '../store';
-import { getOrderByNumber } from './actions';
+import { configureStore } from '@reduxjs/toolkit';
+import { TOrder } from '@utils-types';
 
 jest.mock('@api');
 
 beforeAll(() => {
-  (getOrderByNumberApi as jest.Mock) = jest.fn(() =>
-    Promise.resolve({
-      orders: [ingredient]
-    })
-  );
-
-  jest.spyOn({ getOrderByNumberApi }, 'getOrderByNumberApi');
   jest.spyOn(console, 'log');
 });
 
-afterAll(() => {
+beforeEach(() => {
   jest.clearAllMocks();
+});
+
+afterAll(() => {
+  jest.resetAllMocks();
 });
 
 const ingredient = {
@@ -255,20 +251,24 @@ const ingredientsWithChangedOrder: TOrderSlice = {
   newOrderNumber: 0
 };
 
-describe('OrderSlice test', () => {
-  test('Root reducer initialize test', () => {
-    const action = { type: 'SOME_ACTION' };
-    const state = RootReducer(undefined, action);
-    expect(state).toBeDefined();
-    expect(state.order).toBeDefined();
-    expect(state.ingredients).toBeDefined();
-    expect(state.feeds).toBeDefined();
-    expect(state.user).toBeDefined();
-  });
+const mockOrder: TOrder = {
+  _id: '1',
+  status: 'done',
+  name: 'Mocked order',
+  createdAt: '0',
+  updatedAt: '0',
+  number: 1,
+  ingredients: [
+    '643d69a5c3f7b9001cfa093c',
+    '643d69a5c3f7b9001cfa093e',
+    '643d69a5c3f7b9001cfa0943'
+  ]
+};
 
+describe('OrderSlice test', () => {
   test('add and delete ingredinet test', () => {
-    store.dispatch(addIngredient(ingredient));
-    const order = store.getState().order.orderRequestItems;
+    const state = orderSlice(undefined, addIngredient(ingredient));
+    const order = state.orderRequestItems;
     expect(order).toEqual({
       bun: null,
       ingredients: [
@@ -281,29 +281,15 @@ describe('OrderSlice test', () => {
   });
 
   test('RootReducer delete ingredient test', () => {
-    const state = RootReducer(
-      {
-        order: preloadedState,
-        ingredients: undefined,
-        feeds: undefined,
-        user: undefined
-      },
-      removeIngredient(ingredient)
-    );
-
-    expect(state.order.orderRequestItems).toEqual(
+    const state = orderSlice(preloadedState, removeIngredient(ingredient));
+    expect(state.orderRequestItems).toEqual(
       ingredientsWithDeleted.orderRequestItems
     );
   });
 
   test('change ingredients order', () => {
-    const state = RootReducer(
-      {
-        order: preloadedState,
-        ingredients: undefined,
-        feeds: undefined,
-        user: undefined
-      },
+    const state = orderSlice(
+      preloadedState,
       moveIngredientDown({
         _id: '643d69a5c3f7b9001cfa0941',
         name: 'Биокотлета из марсианской Магнолии',
@@ -320,18 +306,12 @@ describe('OrderSlice test', () => {
         id: '1'
       })
     );
-
-    expect(state.order.orderRequestItems).toEqual(
+    expect(state.orderRequestItems).toEqual(
       ingredientsWithChangedOrder.orderRequestItems
     );
 
-    const changedState = RootReducer(
-      {
-        order: ingredientsWithChangedOrder,
-        ingredients: undefined,
-        feeds: undefined,
-        user: undefined
-      },
+    const changedState = orderSlice(
+      ingredientsWithChangedOrder,
       moveIngredientUp({
         _id: '643d69a5c3f7b9001cfa0941',
         name: 'Биокотлета из марсианской Магнолии',
@@ -348,21 +328,36 @@ describe('OrderSlice test', () => {
         id: '1'
       })
     );
-
-    expect(changedState.order.orderRequestItems).toEqual(
+    expect(changedState.orderRequestItems).toEqual(
       preloadedState.orderRequestItems
     );
   });
 
+  test('onOrderModalClose test', () => {
+    const state = orderSlice({
+        ...preloadedState,
+        orderRequest: true,
+        orderModalData: mockOrder
+      },
+      onOrderModalClose()
+    );
+    expect(state.orderModalData).toBeNull;
+    expect(state.orderRequest).toBeFalsy();
+  });
+
   test('sending order request test', () => {
+    const store = configureStore({
+      preloadedState,
+      reducer: orderSlice
+    });
     store.dispatch({ type: 'order/make/pending' });
-    expect(store.getState().order.orderRequest).toBe(true);
+    expect(store.getState().orderRequest).toBe(true);
 
     store.dispatch({
       type: 'order/make/fulfilled',
       payload: { order: { number: 123 } }
     });
-    expect(store.getState().order.newOrderNumber).toBe(123);
+    expect(store.getState().newOrderNumber).toBe(123);
 
     store.dispatch({
       type: 'order/make/rejected',
@@ -372,8 +367,15 @@ describe('OrderSlice test', () => {
     expect(console.log).toHaveBeenCalledWith('Mocked error');
   });
 
-  test('getOrderByNumber test', async () => {
-    await store.dispatch(getOrderByNumber(1));
-    expect(store.getState().order.orderModalData).toEqual(ingredient);
+  test('getOrderByNumber test', () => {
+    const store = configureStore({
+      preloadedState,
+      reducer: orderSlice
+    });
+    store.dispatch({
+      type: 'order/get_by_number/fulfilled',
+      payload: { orders: [mockOrder] }
+    });
+    expect(store.getState().orderModalData).toEqual(mockOrder);
   });
 });

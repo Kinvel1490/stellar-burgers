@@ -2,13 +2,23 @@ import {
   expect,
   describe,
   test,
-  jest,
   beforeAll,
-  afterAll
+  afterAll,
+  jest
 } from '@jest/globals';
-import { getIngredients } from './ingredientSlice';
-import { getIngredientsApi } from '@api';
-import store from './store';
+import ingredientSlice from './ingredientSlice';
+
+beforeAll(() => {
+  jest.spyOn(console, 'log');
+});
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
+
+afterAll(() => {
+  jest.resetAllMocks();
+});
 
 const mockIngredients = [
   {
@@ -83,22 +93,28 @@ const mockIngredients = [
   }
 ];
 
-beforeAll(() => {
-  (getIngredientsApi as jest.Mock) = jest.fn(() =>
-    Promise.resolve(mockIngredients)
-  );
-
-  jest.spyOn({ getIngredientsApi }, 'getIngredientsApi');
-});
-
-afterAll(() => {
-  jest.clearAllMocks();
-});
-
 describe('ingredientsSlice test', () => {
-  test('getIngredients Test', async () => {
-    expect(store.getState().ingredients.ingredients).toEqual([]);
-    await store.dispatch(getIngredients());
-    expect(store.getState().ingredients.ingredients).toEqual(mockIngredients);
+  test('getIngredients test (pending)', () => {
+    const state = ingredientSlice(undefined, {
+      type: 'GET_INGREDIENTS/pending'
+    });
+    expect(state.isLoading).toBeTruthy();
+  });
+
+  test('getIngredients test (success)', () => {
+    const state = ingredientSlice(undefined, {
+      type: 'GET_INGREDIENTS/fulfilled',
+      payload: mockIngredients
+    });
+    expect(state.ingredients).toEqual(mockIngredients);
+  });
+
+  test('getIngredients test (failure)', () => {
+    ingredientSlice(undefined, {
+      type: 'GET_INGREDIENTS/rejected',
+      error: 'Mocked error'
+    });
+    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(console.log).toHaveBeenCalledWith('Mocked error');
   });
 });

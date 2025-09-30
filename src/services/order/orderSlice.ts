@@ -110,3 +110,5 @@ export const {
   moveIngredientDown,
   onOrderModalClose
 } = orderSlice.actions;
+
+export default orderSlice.reducer;

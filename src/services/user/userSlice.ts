@@ -2,17 +2,15 @@ import { createSlice } from '@reduxjs/toolkit';
 import { TUser } from '@utils-types';
 import {
   loginUser,
-  updateUser,
   getUser,
   registerUser,
   logoutUser,
+  updateUser,
   getUserOrders
 } from './actions';
-import { deleteCookie, setCookie } from '../../utils/cookie';
-import { TAuthResponse } from '@api';
 import { TOrder } from '@utils-types';
 
-interface TUserData {
+export interface TUserData {
   data: TUser | null;
   orders: TOrder[];
 }
@@ -29,31 +27,27 @@ export const userSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(registerUser.fulfilled, (state, action) => {
-        setUserParameters(action.payload, state);
+        setUserParameters(action.payload.user, state);
       })
       .addCase(registerUser.rejected, (_, action) => {
         console.log(action.error.message);
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        setUserParameters(action.payload, state);
+        setUserParameters(action.payload.user, state);
       })
       .addCase(loginUser.rejected, (_, action) => {
         console.log(action.error.message);
       })
       .addCase(logoutUser.fulfilled, (state, action) => {
+        console.log(action);
         if (action.payload.success) {
           state.data = null;
-          deleteCookie('accessToken');
-          localStorage.removeItem('refreshToken');
         }
       })
       .addCase(getUser.fulfilled, (state, action) => {
-        state.data = {
-          name: action.payload.user.name,
-          email: action.payload.user.email
-        };
+        setUserParameters(action.payload.user, state);
       })
-      .addCase(getUser.rejected, (state, action) => {
+      .addCase(getUser.rejected, (_, action) => {
         console.log(action.error.message);
       })
       .addCase(updateUser.fulfilled, (state, action) => {
@@ -64,15 +58,18 @@ export const userSlice = createSlice({
       })
       .addCase(getUserOrders.fulfilled, (state, action) => {
         state.orders = action.payload;
+      })
+      .addCase(getUserOrders.rejected, (_, action) => {
+        console.log(action.error.message);
       });
   }
 });
 
-function setUserParameters(data: TAuthResponse, state: typeof initialState) {
+function setUserParameters(data: TUser, state: typeof initialState) {
   state.data = {
-    name: data.user.name,
-    email: data.user.email
+    name: data.name,
+    email: data.email
   };
-  setCookie('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
 }
+
+export default userSlice.reducer;

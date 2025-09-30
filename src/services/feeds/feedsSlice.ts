@@ -33,3 +33,5 @@ export const feedSlice = createSlice({
       });
   }
 });
+
+export default feedSlice.reducer;

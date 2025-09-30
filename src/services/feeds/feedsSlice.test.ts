@@ -1,14 +1,6 @@
-import {
-  expect,
-  describe,
-  test,
-  jest,
-  beforeAll,
-  afterAll
-} from '@jest/globals';
-import store from '../store';
+import { expect, describe, test } from '@jest/globals';
 import { getFeeds } from './actions';
-import { getFeedsApi } from '@api';
+import feedSlice from './feedsSlice';
 
 const mockFeeds = {
   success: true,
@@ -72,33 +64,24 @@ const mockFeeds = {
   totalToday: 2
 };
 
-beforeAll(() => {
-  (getFeedsApi as jest.Mock) = jest.fn(() => Promise.resolve(mockFeeds));
-
-  jest.spyOn({ getFeedsApi }, 'getFeedsApi');
-});
-
-afterAll(() => {
-  jest.clearAllMocks();
-});
-
 describe('Feeds tests', () => {
-  test('getFeeds test', async () => {
-    expect(store.getState().feeds.feeds.isLoading).toBe(true);
-    expect(store.getState().feeds.feeds.orders).toEqual([]);
-    expect(store.getState().feeds.feeds.total).toEqual(0);
-    expect(store.getState().feeds.feeds.totalToday).toEqual(0);
-    await store.dispatch(getFeeds());
-    expect(store.getState().feeds.feeds.isLoading).toBe(false);
-    expect(store.getState().feeds.feeds.orders).toEqual(mockFeeds.orders);
-    expect(store.getState().feeds.feeds.total).toEqual(4);
-    expect(store.getState().feeds.feeds.totalToday).toEqual(2);
+  test('getFeeds test', () => {
+    const state = feedSlice(undefined, {
+      type: 'feeds/get/fulfilled',
+      payload: mockFeeds
+    });
+    expect(state.feeds.isLoading).toBe(false);
+    expect(state.feeds.orders).toEqual(mockFeeds.orders);
+    expect(state.feeds.total).toEqual(4);
+    expect(state.feeds.totalToday).toEqual(2);
+    expect(state.feeds.error).toBe(null);
+  });
 
-    expect(store.getState().feeds.feeds.error).toBe(null);
-    store.dispatch({
+  test('getFeeds test (failure)', () => {
+    const state = feedSlice(undefined, {
       type: 'feeds/get/rejected',
       error: { message: 'Mock message' }
     });
-    expect(store.getState().feeds.feeds.error).toBe('Mock message');
+    expect(state.feeds.error).toBe('Mock message');
   });
 });
