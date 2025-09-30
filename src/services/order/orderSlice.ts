@@ -9,7 +9,7 @@ import {
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { makeOrder, getOrderByNumber } from './actions';
 
-interface TOrderSlice {
+export interface TOrderSlice {
   orderRequestItems: TOrderRequestItems;
   orderRequest: boolean;
   orderData: TOrdersData;
@@ -110,3 +110,5 @@ export const {
   moveIngredientDown,
   onOrderModalClose
 } = orderSlice.actions;
+
+export default orderSlice.reducer;

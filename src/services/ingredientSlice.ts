@@ -4,10 +4,12 @@ import { getIngredientsApi } from '@api';
 
 interface AppState {
   ingredients: TIngredient[];
+  isLoading: boolean;
 }
 
 const initialState: AppState = {
-  ingredients: []
+  ingredients: [],
+  isLoading: false
 };
 
 export const getIngredients = createAsyncThunk('GET_INGREDIENTS', async () =>
@@ -22,9 +24,16 @@ export const ingredientSlice = createSlice({
     selectIngredients: (sliceState) => sliceState.ingredients
   },
   extraReducers: (builder) => {
-    builder.addCase(getIngredients.fulfilled, (state, action) => {
-      state.ingredients = action.payload;
-    });
+    builder
+      .addCase(getIngredients.pending, (state, action) => {
+        state.isLoading = true;
+      })
+      .addCase(getIngredients.fulfilled, (state, action) => {
+        state.ingredients = action.payload;
+      })
+      .addCase(getIngredients.rejected, (_, action) => {
+        action?.error && console.log(action.error);
+      });
   }
 });
 

@@ -26,10 +26,11 @@ export const BurgerConstructor: FC = () => {
       navigate('/login');
       return;
     }
-    let elemetsToOrder: string[] | undefined = [];
-    elemetsToOrder.push(constructorItems.bun!._id);
     dispatch(
-      makeOrder(constructorItems.ingredients.map((element) => element._id))
+      makeOrder([
+        constructorItems.bun!._id,
+        ...constructorItems.ingredients.map((element) => element._id)
+      ])
     );
   };
 
